@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b0c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180.png">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="coach.css">
+  <title>Ironman Coach</title>
+</head>
+<body>
+  <header id="topbar" hidden>
+    <button id="menu" class="iconbtn" aria-label="Menu">☰</button>
+    <button id="back" class="iconbtn" hidden aria-label="Back">‹</button>
+    <a class="logo" id="brand" aria-label="Ironman Coach">
+      <img class="logomark" src="icons/logo.png" width="27" height="27" alt="" aria-hidden="true">
+      <span class="wordmark"></span>
+    </a>
+    <div class="spacer"></div>
+    <span id="sync" class="sync"></span>
+    <button id="bell" class="iconbtn bell" aria-label="Notifications">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.7 21a2 2 0 0 1-3.4 0"/>
+      </svg>
+      <span id="bellbadge" class="bellbadge" hidden></span>
+    </button>
+  </header>
+  <div id="backdrop" class="backdrop" hidden></div>
+  <nav id="drawer" class="drawer" hidden></nav>
+  <main id="app" aria-live="polite">
+    <!-- Momentary placeholder so a hiccup before the first JS render is never a pure-white screen.
+         The first renderSection()/showLogin() replaces it. Pre-JS, so the text can't use T(). -->
+    <div class="boot" role="status">Loading…</div>
+    <noscript><div class="boot">This app needs JavaScript enabled.</div></noscript>
+  </main>
+
+  <script src="vendor/supabase.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

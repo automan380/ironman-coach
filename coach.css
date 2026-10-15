@@ -1,0 +1,15 @@
+/* Coach-only styles. Kept SEPARATE from styles.css so styles.css stays byte-identical to the athlete
+ * app (tools/check-ui-sync.sh enforces that). Uses the same design tokens defined in styles.css. */
+
+/* Roster list: an athlete row with a live presence dot (reuses the .sess tile look). */
+.rosteritem { align-items: center; gap: .6rem; }
+.rosteritem .dot {
+  width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto;
+  background: var(--muted); box-shadow: 0 0 0 2px var(--surface);
+}
+.rosteritem .dot.on   { background: var(--ok); }
+.rosteritem .dot.idle { background: var(--warn); }
+.rosteritem .dot.off  { background: var(--muted); }
+
+/* The selected athlete's name above their week. */
+.rostername { margin: .2rem 0 .6rem; }
