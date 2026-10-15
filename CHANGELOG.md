@@ -3,6 +3,12 @@
 All notable changes to the coach app. The version here matches `APP_VERSION` in `app.js` (shown in the
 Settings page). Dates are YYYY-MM-DD.
 
+## 1.2.0 — 2026-10-15
+- **Edit a workout from the app.** Open a session and you can now move it to another day, change its
+  duration, or add a note — saved straight to the plan, and the athlete gets a "session changed" notice.
+  (The plan now lives as a stable, editable record; needs Supabase migration `0010` in ironman-planner.)
+- Service-worker cache bumped to `v3`.
+
 ## 1.1.0 — 2026-10-15
 - **Select and delete messages**, like the athlete app: a Select all / Deselect / Delete toolbar with a
   checkbox on each message. (Needs Supabase migration `0009_coach_message_delete.sql` in ironman-planner,

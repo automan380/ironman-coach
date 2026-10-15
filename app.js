@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const APP_VERSION = "1.1.0";          // shown in the settings menu; keep in step with CHANGELOG.md
+  const APP_VERSION = "1.2.0";          // shown in the settings menu; keep in step with CHANGELOG.md
   let pendingReload = false;            // set when the coach taps "update"; drives the one reload below
   const CFG = window.IRONMAN_CONFIG || {};
   // "Remember me on this device": when on, the session lives in localStorage and survives app
@@ -46,6 +46,10 @@
       compose_title: "Message athletes", to_label: "To", to_all: "All athletes",
       msg_sent_n: "Sent to {n}.", choose_recipient: "Choose who to message.",
       inbox_title: "Messages", inbox_from: "From {name}", view_test_result: "Test result", no_test_result: "No result submitted yet.",
+      edit_session: "Edit this session", move_to_day: "Day", duration_min: "Duration (min)",
+      add_note: "Add a note", note_ph: "e.g. keep it easy, you're flying tomorrow",
+      save_edit: "Save change", edit_saved: "Saved — the athlete is notified.", no_change: "Nothing changed.",
+      n_session_edit: "Session changed", session_changed_body: "Your coach changed the session on {day} — sync to see it.",
       no_zones: "No test results yet — your zones will appear here once your coach records a test.",
       threshold: "threshold", quest_soon: "You'll fill in your questionnaires here — coming soon.",
       m_hr: "Heart rate", m_power: "Power", m_pace: "Pace",
@@ -126,6 +130,10 @@
       compose_title: "Scrivi agli atleti", to_label: "A", to_all: "Tutti gli atleti",
       msg_sent_n: "Inviato a {n}.", choose_recipient: "Scegli a chi scrivere.",
       inbox_title: "Messaggi", inbox_from: "Da {name}", view_test_result: "Risultato del test", no_test_result: "Nessun risultato inviato ancora.",
+      edit_session: "Modifica questa sessione", move_to_day: "Giorno", duration_min: "Durata (min)",
+      add_note: "Aggiungi una nota", note_ph: "es. tienila facile, domani voli",
+      save_edit: "Salva modifica", edit_saved: "Salvato — l'atleta è avvisato.", no_change: "Nessuna modifica.",
+      n_session_edit: "Sessione modificata", session_changed_body: "Il coach ha modificato la sessione del {day} — sincronizza per vederla.",
       no_zones: "Nessun test ancora — le tue zone compariranno qui dopo che il coach registra un test.",
       threshold: "soglia", quest_soon: "Qui compilerai i tuoi questionari — disponibile a breve.",
       m_hr: "Frequenza cardiaca", m_power: "Potenza", m_pace: "Passo",
@@ -525,6 +533,7 @@
   }
   function noticeLabel(kind) {
     return kind === "plan_update" ? T("n_plan") : kind === "zones_update" ? T("n_zones")
+      : kind === "session_edit" ? T("n_session_edit")
       : kind === "app_available" ? T("n_app_available") : kind === "app" ? T("n_app") : T("n_message");
   }
   function renderInbox() {
@@ -1009,12 +1018,58 @@
     if (s.detail && s.detail.length) html += `<div class="sectiontitle">${T("detail")}</div><ul class="lines">${s.detail.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>`;
     html += fuelHtml(s.fuel, s.sport, s.minutes);
     if (s.provenance) html += `<p class="note">${esc(s.provenance)}</p>`;
-    html += loggedReadOnly(s);                            // coach sees what the athlete logged (read-only)
+    html += loggedReadOnly(s);                            // what the athlete logged (read-only)
+    // --- coach edit: move the session, change its duration, add a note (direct row writes) ---
+    const wm = weekMondayOf(s.on_date);
+    let dayOpts = "";
+    for (let i = 0; i < 7; i++) { const iso = addDays(wm, i); dayOpts += `<option value="${iso}" ${iso === s.on_date ? "selected" : ""}>${esc(shortDay(iso))}</option>`; }
+    html += `<div class="sectiontitle">${T("edit_session")}</div>
+      <form id="editform">
+        <div class="field"><label for="ed_day">${T("move_to_day")}</label><select id="ed_day">${dayOpts}</select></div>
+        <div class="field"><label for="ed_min">${T("duration_min")}</label><input id="ed_min" type="number" inputmode="numeric" min="0" value="${esc(s.minutes || 0)}"></div>
+        <div class="field"><label for="ed_note">${T("add_note")}</label><input id="ed_note" type="text" placeholder="${T("note_ph")}"></div>
+        <div class="actions"><button type="button" id="ed_save" class="primary">${T("save_edit")}</button></div>
+        <div id="ed_msg" class="msg" hidden></div>
+      </form>`;
     html += `</div>`;
     app.innerHTML = html;
     const gt = $("#gototest");
     if (gt && testFor) gt.addEventListener("click", () => renderTest(testFor));
+    $("#ed_save").addEventListener("click", () => saveSessionEdit(s));
     scrollTop();
+  }
+  // Coach edit = a direct write to the plan_session row on Supabase (migration 0010 allows it), then a
+  // "session changed" notice. No engine: the materialized plan is the source of truth. A move appends on
+  // the target day (new ordinal) so nothing else renumbers.
+  async function saveSessionEdit(s) {
+    const m = $("#ed_msg"), btn = $("#ed_save");
+    if (!navigator.onLine) { m.hidden = false; m.className = "msg err"; m.textContent = T("msg_offline"); return; }
+    const newDay = $("#ed_day").value;
+    const mins = parseInt($("#ed_min").value, 10);
+    const note = ($("#ed_note").value || "").trim();
+    const patch = {};
+    if (Number.isFinite(mins) && mins !== s.minutes) patch.minutes = mins;
+    if (note) patch.detail = (s.detail || []).concat([note]);
+    let moved = false, dayFor = s.on_date;
+    if (newDay && newDay !== s.on_date) {
+      const n = sessionsOn(newDay).filter((x) => x.sport === s.sport && x.role === s.role).length;
+      patch.on_date = newDay; patch.session_key = `${s.sport}-${s.role}-${n + 1}`; patch.ordinal = n + 1;
+      moved = true; dayFor = newDay;
+    }
+    if (!Object.keys(patch).length) { m.hidden = false; m.className = "msg info"; m.textContent = T("no_change"); return; }
+    btn.disabled = true;
+    try {
+      const { error } = await SB.from("plan_session").update(patch)
+        .eq("athlete_id", S.selectedAthleteId).eq("on_date", s.on_date).eq("session_key", s.session_key);
+      if (error) throw error;
+      try { await SB.from("message").insert({ athlete_id: S.selectedAthleteId, direction: "out",
+        kind: "session_edit", body: T("session_changed_body", { day: shortDay(dayFor) }) }); } catch (e) { /* best effort */ }
+      m.hidden = false; m.className = "msg info"; m.textContent = T("edit_saved");
+      await loadAthleteData(S.selectedAthleteId);        // refresh from the source of truth
+      S.current = null; S.section = "plan"; renderWeek();
+    } catch (e) {
+      m.hidden = false; m.className = "msg err"; m.textContent = T("error") + ((e && e.message) || e); btn.disabled = false;
+    }
   }
   // Read-only "what the athlete logged" box (same markup as the athlete app's logged box — no form).
   function loggedReadOnly(s) {
