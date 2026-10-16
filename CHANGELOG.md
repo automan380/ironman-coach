@@ -3,6 +3,16 @@
 All notable changes to the coach app. The version here matches `APP_VERSION` in `app.js` (shown in the
 Settings page). Dates are YYYY-MM-DD.
 
+## 1.3.0 — 2026-10-16
+- **The athlete you are looking at updates by itself.** Every 30 seconds (and when you come back to the
+  app) their logs, a session they did on another day (which now moves to that day — Supabase migration
+  `0011`) and edits made on your computer are picked up, and the week on screen is redrawn in place.
+- **A session the athlete has logged can no longer be moved** (done or skipped): the edit form shows why
+  instead of the day picker. To move it, the athlete logs it again on the day they did it. Its length
+  and notes can still be changed. (Supabase migration `0013` refuses the move for any app.)
+- **Today stands out**: the whole day box is tinted (light or dark theme), not just its name in red.
+- Service-worker cache bumped to `v4`.
+
 ## 1.2.0 — 2026-10-15
 - **Edit a workout from the app.** Open a session and you can now move it to another day, change its
   duration, or add a note — saved straight to the plan, and the athlete gets a "session changed" notice.

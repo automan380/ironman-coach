@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const APP_VERSION = "1.2.0";          // shown in the settings menu; keep in step with CHANGELOG.md
+  const APP_VERSION = "1.3.0";          // shown in the settings menu; keep in step with CHANGELOG.md
   let pendingReload = false;            // set when the coach taps "update"; drives the one reload below
   const CFG = window.IRONMAN_CONFIG || {};
   // "Remember me on this device": when on, the session lives in localStorage and survives app
@@ -49,6 +49,7 @@
       edit_session: "Edit this session", move_to_day: "Day", duration_min: "Duration (min)",
       add_note: "Add a note", note_ph: "e.g. keep it easy, you're flying tomorrow",
       save_edit: "Save change", edit_saved: "Saved — the athlete is notified.", no_change: "Nothing changed.",
+      logged_stays: "Logged by the athlete on this day, so it stays here. To move it, the athlete logs it again on the day they did it.",
       n_session_edit: "Session changed", session_changed_body: "Your coach changed the session on {day} — sync to see it.",
       no_zones: "No test results yet — your zones will appear here once your coach records a test.",
       threshold: "threshold", quest_soon: "You'll fill in your questionnaires here — coming soon.",
@@ -133,6 +134,7 @@
       edit_session: "Modifica questa sessione", move_to_day: "Giorno", duration_min: "Durata (min)",
       add_note: "Aggiungi una nota", note_ph: "es. tienila facile, domani voli",
       save_edit: "Salva modifica", edit_saved: "Salvato — l'atleta è avvisato.", no_change: "Nessuna modifica.",
+      logged_stays: "Registrata dall'atleta in questo giorno, quindi resta qui. Per spostarla, l'atleta la registra di nuovo nel giorno in cui l'ha fatta.",
       n_session_edit: "Sessione modificata", session_changed_body: "Il coach ha modificato la sessione del {day} — sincronizza per vederla.",
       no_zones: "Nessun test ancora — le tue zone compariranno qui dopo che il coach registra un test.",
       threshold: "soglia", quest_soon: "Qui compilerai i tuoi questionari — disponibile a breve.",
@@ -494,6 +496,19 @@
         .eq("direction", "in").order("created_at", { ascending: false });
       if (data) { S.messages = data; setBell(); }
     } catch (e) { /* ignore */ }
+    silentRefresh();
+  }
+  // Keep the athlete being looked at in step -- their logs, a "done on another day" move, an edit made
+  // on the coach's computer -- WITHOUT disturbing the coach: re-read and redraw the same week at the
+  // same scroll position. Never while a session (or its edit form) is open.
+  async function silentRefresh() {
+    if (!navigator.onLine || !S.isCoach || document.hidden || !S.selectedAthleteId) return;
+    if (S.section !== "plan" || S.view !== "week" || S.current) return;
+    const id = S.selectedAthleteId, y = window.scrollY;
+    try { await loadAthleteData(id); } catch (e) { return; }
+    if (S.selectedAthleteId === id && S.section === "plan" && S.view === "week" && !S.current) {
+      renderWeek(); window.scrollTo(0, y);
+    }
   }
   async function markMessagesRead() {
     if (S.appNotice) S.appNotice.unread = false;
@@ -616,7 +631,7 @@
     });
     window.addEventListener("offline", setSync);
     document.addEventListener("visibilitychange", () => { if (!document.hidden) pollMessages(); });
-    setInterval(pollMessages, 60000);
+    setInterval(pollMessages, 30000);
     // Supabase runs this callback while holding the auth lock; calling any SB.* inside it deadlocks.
     // Defer to the next tick, out of the lock, before (re-)routing.
     SB.auth.onAuthStateChange(() => { setTimeout(route, 0); });
@@ -1025,7 +1040,9 @@
     for (let i = 0; i < 7; i++) { const iso = addDays(wm, i); dayOpts += `<option value="${iso}" ${iso === s.on_date ? "selected" : ""}>${esc(shortDay(iso))}</option>`; }
     html += `<div class="sectiontitle">${T("edit_session")}</div>
       <form id="editform">
-        <div class="field"><label for="ed_day">${T("move_to_day")}</label><select id="ed_day">${dayOpts}</select></div>
+        ${logState(s)
+          ? `<div class="field"><label>${T("move_to_day")}</label><p class="note">${T("logged_stays")}</p></div>`
+          : `<div class="field"><label for="ed_day">${T("move_to_day")}</label><select id="ed_day">${dayOpts}</select></div>`}
         <div class="field"><label for="ed_min">${T("duration_min")}</label><input id="ed_min" type="number" inputmode="numeric" min="0" value="${esc(s.minutes || 0)}"></div>
         <div class="field"><label for="ed_note">${T("add_note")}</label><input id="ed_note" type="text" placeholder="${T("note_ph")}"></div>
         <div class="actions"><button type="button" id="ed_save" class="primary">${T("save_edit")}</button></div>
@@ -1044,7 +1061,8 @@
   async function saveSessionEdit(s) {
     const m = $("#ed_msg"), btn = $("#ed_save");
     if (!navigator.onLine) { m.hidden = false; m.className = "msg err"; m.textContent = T("msg_offline"); return; }
-    const newDay = $("#ed_day").value;
+    // A logged session stays on its day (the coach's rule; Supabase 0013 refuses it too): no picker.
+    const newDay = $("#ed_day") ? $("#ed_day").value : s.on_date;
     const mins = parseInt($("#ed_min").value, 10);
     const note = ($("#ed_note").value || "").trim();
     const patch = {};
@@ -1061,7 +1079,10 @@
     try {
       const { error } = await SB.from("plan_session").update(patch)
         .eq("athlete_id", S.selectedAthleteId).eq("on_date", s.on_date).eq("session_key", s.session_key);
-      if (error) throw error;
+      if (error) {
+        if (String(error.message || "").includes("LOGGED_SESSION_STAYS")) throw new Error(T("logged_stays"));
+        throw error;
+      }
       try { await SB.from("message").insert({ athlete_id: S.selectedAthleteId, direction: "out",
         kind: "session_edit", body: T("session_changed_body", { day: shortDay(dayFor) }) }); } catch (e) { /* best effort */ }
       m.hidden = false; m.className = "msg info"; m.textContent = T("edit_saved");
