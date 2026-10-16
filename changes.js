@@ -1,0 +1,25 @@
+// What's new — shown in the app (Settings › Changelog), in the language the coach chose.
+// Keep in step with CHANGELOG.md: one entry per version, newest first, in plain words.
+window.APP_CHANGES = [
+  { v: "1.4.0", date: "2026-10-16",
+    en: ["New \"What's new\" page: Settings › Changelog shows what changed in each version, in your language.",
+         "The sync button now sits in the top bar, right next to \"up to date\": tap it to sync at any time."],
+    it: ["Nuova pagina \"Novità\": Impostazioni › Changelog mostra cosa è cambiato in ogni versione, nella tua lingua.",
+         "Il pulsante di sincronizzazione ora è nella barra in alto, accanto ad \"aggiornato\": toccalo quando vuoi."] },
+  { v: "1.3.0", date: "2026-10-16",
+    en: ["The athlete you are looking at updates by itself every 30 seconds, without leaving the week on screen.",
+         "A session the athlete has logged can no longer be moved: only a new log on another day moves it.",
+         "Today stands out: the whole day box is tinted."],
+    it: ["L'atleta che stai guardando si aggiorna da solo ogni 30 secondi, senza lasciare la settimana sullo schermo.",
+         "Una sessione registrata dall'atleta non si può più spostare: solo una nuova registrazione su un altro giorno la sposta.",
+         "Oggi si vede subito: tutto il riquadro del giorno è colorato."] },
+  { v: "1.2.0", date: "2026-10-15",
+    en: ["Edit a workout from the app: move it to another day, change its duration or add a note."],
+    it: ["Modifica un allenamento dall'app: spostalo su un altro giorno, cambia la durata o aggiungi una nota."] },
+  { v: "1.1.0", date: "2026-10-15",
+    en: ["Select and delete messages."],
+    it: ["Seleziona e cancella i messaggi."] },
+  { v: "1.0.0", date: "2026-10-15",
+    en: ["First version: sign in as the coach, athletes list with a live presence dot, read-only plans and zones, messages to one or all athletes, works offline."],
+    it: ["Prima versione: accesso come coach, elenco atleti con il pallino di presenza, piani e zone in sola lettura, messaggi a uno o a tutti gli atleti, funziona offline."] },
+];

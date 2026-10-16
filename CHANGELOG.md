@@ -3,6 +3,14 @@
 All notable changes to the coach app. The version here matches `APP_VERSION` in `app.js` (shown in the
 Settings page). Dates are YYYY-MM-DD.
 
+## 1.4.0 — 2026-10-16
+- **New "What's new" page.** Settings › **Changelog** (under the version) opens what changed in each
+  version, in the language you chose (English or Italian). The in-app text lives in `changes.js` —
+  keep it in step with this file.
+- **Sync button in the top bar**, right next to "up to date": tap it to sync at any time; it spins while
+  it works and the status says how it went. It is no longer in Settings.
+- Service-worker cache bumped to `v5`.
+
 ## 1.3.0 — 2026-10-16
 - **The athlete you are looking at updates by itself.** Every 30 seconds (and when you come back to the
   app) their logs, a session they did on another day (which now moves to that day — Supabase migration

@@ -3,9 +3,9 @@
 // Supabase API calls (a different origin) — those go straight to the network, and when there is no
 // network the app falls back to the data it cached in IndexedDB. Writes (POST/PATCH) are never cached.
 // Kept byte-identical to the athlete app's sw.js except for the cache name (see tools/check-ui-sync.sh).
-const CACHE = "ironman-coach-v4";
+const CACHE = "ironman-coach-v5";
 const SHELL = [
-  "./", "./index.html", "./styles.css", "./coach.css", "./app.js", "./config.js",
+  "./", "./index.html", "./styles.css", "./coach.css", "./app.js", "./changes.js", "./config.js",
   "./vendor/supabase.js", "./manifest.webmanifest",
   "./icons/logo.png", "./icons/icon-192.png", "./icons/icon-512.png",
   "./icons/icon-maskable-512.png", "./icons/apple-touch-icon-180.png", "./icons/favicon-32.png",
