@@ -3,6 +3,14 @@
 All notable changes to the coach app. The version here matches `APP_VERSION` in `app.js` (shown in the
 Settings page). Dates are YYYY-MM-DD.
 
+## 1.7.0 — 2026-11-25
+- **Which athlete-app version each athlete uses.** In the Athletes list, after "last seen …", e.g.
+  "app v2.12.0" — the copy running on the athlete's phone, reported by athlete app 2.12.0 and later each
+  time it opens. An athlete who has used the app but shows "app older than v2.12.0" has not updated yet.
+  Needs Supabase migration `0016` in ironman-planner; until it is applied the list shows no version and
+  everything else works as before.
+- New "What's new" entry (EN/IT). Service-worker cache bumped to `v8`.
+
 ## 1.6.0 — 2026-11-25
 - **Two measures in every workout target**: the leading one, and the other in brackets — e.g.
   "116–130 bpm (168–228 W)". The coach chooses per athlete which measure leads each sport (bike: heart rate

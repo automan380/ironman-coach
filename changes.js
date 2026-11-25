@@ -1,6 +1,9 @@
 // What's new — shown in the app (Settings › Changelog), in the language the coach chose.
 // Keep in step with CHANGELOG.md: one entry per version, newest first, in plain words.
 window.APP_CHANGES = [
+  { v: "1.7.0", date: "2026-11-25",
+    en: ["Athletes list: next to when each athlete was last seen, the version of the athlete app they are using (e.g. \"app v2.12.0\")."],
+    it: ["Elenco atleti: accanto a quando è stato visto l'atleta, la versione dell'app atleta che sta usando (es. \"app v2.12.0\")."] },
   { v: "1.6.0", date: "2026-11-25",
     en: ["Workout targets show a second measure in brackets, e.g. \"116–130 bpm (168–228 W)\": your coach chooses which leads for each sport.",
          "A new test now counts from the day it was done: the zones change straight away, no longer over 3 weeks."],

@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const APP_VERSION = "1.6.0";          // shown in the settings menu; keep in step with CHANGELOG.md
+  const APP_VERSION = "1.7.0";          // shown in the settings menu; keep in step with CHANGELOG.md
   let pendingReload = false;            // set when the coach taps "update"; drives the one reload below
   const CFG = window.IRONMAN_CONFIG || {};
   // "Remember me on this device": when on, the session lives in localStorage and survives app
@@ -42,6 +42,7 @@
       nav_roster: "Athletes", nav_plan: "Plan", nav_zones: "Zones", nav_account: "Account", nav_settings: "Settings",
       roster_title: "Athletes", no_athletes: "No athletes yet — publish an athlete from the PC app and they'll appear here.",
       last_seen_ago: "last seen {when}", never_seen: "not signed in yet", online_now: "online now",
+      app_version: "app v{v}", app_old: "app older than v2.12.0",
       not_coach_title: "Not a coach account", not_coach_sub: "You're signed in as {email}, but this login isn't set up as a coach. Sign in with your coach account.",
       compose_title: "Message athletes", to_label: "To", to_all: "All athletes",
       msg_sent_n: "Sent to {n}.", choose_recipient: "Choose who to message.",
@@ -129,6 +130,7 @@
       nav_roster: "Atleti", nav_plan: "Piano", nav_zones: "Zone", nav_account: "Account", nav_settings: "Impostazioni",
       roster_title: "Atleti", no_athletes: "Nessun atleta ancora — pubblica un atleta dall'app sul PC e comparirà qui.",
       last_seen_ago: "visto {when}", never_seen: "mai entrato", online_now: "online ora",
+      app_version: "app v{v}", app_old: "app precedente alla v2.12.0",
       not_coach_title: "Non è un account coach", not_coach_sub: "Hai effettuato l'accesso come {email}, ma questo accesso non è impostato come coach. Entra con il tuo account coach.",
       compose_title: "Scrivi agli atleti", to_label: "A", to_all: "Tutti gli atleti",
       msg_sent_n: "Inviato a {n}.", choose_recipient: "Scegli a chi scrivere.",
@@ -698,8 +700,14 @@
     return true;
   }
   async function loadRoster() {
-    const { data, error } = await SB.from("athlete_account")
-      .select("athlete_id, display_name, email, last_seen").order("display_name");
+    let { data, error } = await SB.from("athlete_account")
+      .select("athlete_id, display_name, email, last_seen, app_version").order("display_name");
+    // Supabase migration 0016 not applied yet (no app_version column): read the roster without the
+    // version rather than lose the whole list.
+    if (error) {
+      ({ data, error } = await SB.from("athlete_account")
+        .select("athlete_id, display_name, email, last_seen").order("display_name"));
+    }
     if (error) throw error;
     S.roster = data || [];
     await idbSet("cache", "roster", S.roster);
@@ -754,16 +762,24 @@
     if (mins <= 5) return { cls: "on", label: T("online_now") };
     return { cls: "idle", label: T("last_seen_ago", { when: shortDay(iso.slice(0, 10)) }) };
   }
+  // The athlete-app version the athlete is running (Supabase 0016), for someone who has used the app.
+  // No app_version field at all = the roster was read without it (migration not applied): say nothing.
+  // NULL = their copy predates 2.12.0, the first version that reports itself.
+  function appVersionLabel(a) {
+    if (!a.last_seen || !("app_version" in a)) return "";
+    return a.app_version ? T("app_version", { v: a.app_version }) : T("app_old");
+  }
   function renderRoster() {
     S.view = "week"; S.current = null; $("#back").hidden = true;
     let html = `<h2 class="pagetitle">${T("roster_title")}</h2>`;
     if (!S.roster.length) { app.innerHTML = html + `<div class="card"><p class="muted">${T("no_athletes")}</p></div>`; return; }
     html += S.roster.map((a) => {
       const p = presenceInfo(a.last_seen);
+      const ver = appVersionLabel(a);
       const nm = a.display_name || a.email || ("#" + a.athlete_id);
       return `<button class="sess rosteritem" data-aid="${esc(a.athlete_id)}" data-name="${esc(nm)}">
         <span class="dot ${p.cls}" aria-hidden="true"></span>
-        <div class="body"><div class="t">${esc(nm)}</div><div class="sub">${esc(p.label)}</div></div>
+        <div class="body"><div class="t">${esc(nm)}</div><div class="sub">${esc(p.label)}${ver ? " · " + esc(ver) : ""}</div></div>
         <span class="chevron">›</span></button>`;
     }).join("");
     app.innerHTML = html;
