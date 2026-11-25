@@ -3,6 +3,21 @@
 All notable changes to the coach app. The version here matches `APP_VERSION` in `app.js` (shown in the
 Settings page). Dates are YYYY-MM-DD.
 
+## 1.6.0 — 2026-11-25
+- **Two measures in every workout target**: the leading one, and the other in brackets — e.g.
+  "116–130 bpm (168–228 W)". The coach chooses per athlete which measure leads each sport (bike: heart rate
+  or power; run: heart rate or pace; swim: pace).
+- **A test counts from its own day**: no more "introduced gradually over 3 weeks" on the Zones page.
+- New "What's new" entry (EN/IT). Service-worker cache bumped to `v7`.
+
+## 1.5.0 — 2026-11-25
+- **How much the athlete's zones changed.** On the Zones page, under each zone card, the change since the
+  previous test of that sport: the threshold before and now, by how much and in %, a big change's weekly
+  steps, and every zone before and now. Power and pace are green when better, red when worse; heart rate
+  is shown without a colour (a higher threshold heart rate is not by itself an improvement). Published by
+  the coach's computer with the zones (Supabase migration `0015` in ironman-planner).
+- New "What's new" entry (EN/IT). Service-worker cache bumped to `v6`.
+
 ## 1.4.0 — 2026-10-16
 - **New "What's new" page.** Settings › **Changelog** (under the version) opens what changed in each
   version, in the language you chose (English or Italian). The in-app text lives in `changes.js` —

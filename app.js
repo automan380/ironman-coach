@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const APP_VERSION = "1.4.0";          // shown in the settings menu; keep in step with CHANGELOG.md
+  const APP_VERSION = "1.6.0";          // shown in the settings menu; keep in step with CHANGELOG.md
   let pendingReload = false;            // set when the coach taps "update"; drives the one reload below
   const CFG = window.IRONMAN_CONFIG || {};
   // "Remember me on this device": when on, the session lives in localStorage and survives app
@@ -50,7 +50,9 @@
       add_note: "Add a note", note_ph: "e.g. keep it easy, you're flying tomorrow",
       save_edit: "Save change", edit_saved: "Saved — the athlete is notified.", no_change: "Nothing changed.",
       logged_stays: "Logged by the athlete on this day, so it stays here. To move it, the athlete logs it again on the day they did it.",
-      n_session_edit: "Session changed", session_changed_body: "Your coach changed the session on {day} — sync to see it.",
+      n_session_edit: "Session changed",
+      since_prev: "Since the previous test", before: "Before", now: "Now", faster: "faster", slower: "slower",
+      method_changed: "The zone percentages changed between these two tests.", session_changed_body: "Your coach changed the session on {day} — sync to see it.",
       no_zones: "No test results yet — your zones will appear here once your coach records a test.",
       threshold: "threshold", quest_soon: "You'll fill in your questionnaires here — coming soon.",
       m_hr: "Heart rate", m_power: "Power", m_pace: "Pace",
@@ -135,7 +137,9 @@
       add_note: "Aggiungi una nota", note_ph: "es. tienila facile, domani voli",
       save_edit: "Salva modifica", edit_saved: "Salvato — l'atleta è avvisato.", no_change: "Nessuna modifica.",
       logged_stays: "Registrata dall'atleta in questo giorno, quindi resta qui. Per spostarla, l'atleta la registra di nuovo nel giorno in cui l'ha fatta.",
-      n_session_edit: "Sessione modificata", session_changed_body: "Il coach ha modificato la sessione del {day} — sincronizza per vederla.",
+      n_session_edit: "Sessione modificata",
+      since_prev: "Rispetto al test precedente", before: "Prima", now: "Ora", faster: "più veloce", slower: "più lento",
+      method_changed: "Le percentuali delle zone sono cambiate tra questi due test.", session_changed_body: "Il coach ha modificato la sessione del {day} — sincronizza per vederla.",
       no_zones: "Nessun test ancora — le tue zone compariranno qui dopo che il coach registra un test.",
       threshold: "soglia", quest_soon: "Qui compilerai i tuoi questionari — disponibile a breve.",
       m_hr: "Frequenza cardiaca", m_power: "Potenza", m_pace: "Passo",
@@ -375,10 +379,25 @@
         `<table class="ztable">` +
         (z.zones || []).map((zz) =>
           `<tr class="z"><td class="zn">Z${esc(zz.name)}</td><td>${esc(zz.label)}</td><td class="num">${esc(zz.range)}</td></tr>`).join("") +
-        `</table></div>`;
+        `</table>` + (z.change ? zoneChangeHtml(z.change) : "") + `</div>`;
     });
     app.innerHTML = html;
   }
+  // The change since the previous test of this sport, published by the coach's computer with the zones
+  // (Supabase 0015). Power and pace are coloured; heart rate is not -- a higher threshold heart rate is
+  // not by itself an improvement (coach's decision). Nothing is shown for a sport's first test.
+  function zoneChangeHtml(ch) {
+    const cls = ch.improved === true ? "better" : ch.improved === false ? "worse" : "";
+    const pct = String(ch.pct || "").replace(" faster", " " + T("faster")).replace(" slower", " " + T("slower"));
+    return `<div class="zchange"><div class="zchead">${T("since_prev")} · ${esc(shortDay(ch.previous_date))} → ${esc(shortDay(ch.latest_date))}</div>` +
+      `<div>${T("threshold")} ${esc(ch.was)} → <strong>${esc(ch.now)}</strong> <span class="delta ${cls}">${esc(ch.delta)} (${esc(pct)})</span></div>` +
+      (ch.method_changed ? `<div class="muted small">${T("method_changed")}</div>` : "") +
+      `<table class="ztable"><tr><th></th><th>${T("before")}</th><th>${T("now")}</th></tr>` +
+      (ch.zones || []).map((zz) =>
+        `<tr><td class="zn">Z${esc(zz.name)}</td><td class="num muted">${esc(zz.was)}</td><td class="num">${esc(zz.now)}</td></tr>`).join("") +
+      `</table></div>`;
+  }
+
 
 
   // ---------- Account page ----------
@@ -1014,6 +1033,8 @@
     let s = `<div class="sectiontitle">${T("target")}</div><div class="target">`;
     if (t.range) {
       s += `<strong>${esc(t.range)}</strong>${t.unit ? " " + esc(t.unit) : ""}`;
+      // The other measure, second (the coach chooses which leads, per athlete): "116-130 bpm (168-228 W)".
+      if (t.second && t.second.range) s += ` <span class="muted">(${esc(t.second.range)}${t.second.unit ? " " + esc(t.second.unit) : ""})</span>`;
       if (t.talk) s += ` · ${T("talk")} ${esc(t.talk)}`;
       if (t.rpe) s += ` · RPE ${esc(t.rpe[0])}–${esc(t.rpe[1])}`;
     } else {

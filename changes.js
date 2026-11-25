@@ -1,6 +1,16 @@
 // What's new — shown in the app (Settings › Changelog), in the language the coach chose.
 // Keep in step with CHANGELOG.md: one entry per version, newest first, in plain words.
 window.APP_CHANGES = [
+  { v: "1.6.0", date: "2026-11-25",
+    en: ["Workout targets show a second measure in brackets, e.g. \"116–130 bpm (168–228 W)\": your coach chooses which leads for each sport.",
+         "A new test now counts from the day it was done: the zones change straight away, no longer over 3 weeks."],
+    it: ["Gli obiettivi degli allenamenti mostrano una seconda misura tra parentesi, es. \"116–130 bpm (168–228 W)\": il coach sceglie quale è la principale per ogni sport.",
+         "Un nuovo test vale dal giorno in cui è stato fatto: le zone cambiano subito, non più in 3 settimane."] },
+  { v: "1.5.0", date: "2026-11-25",
+    en: ["Zones page: under each zone card, the change since the previous test of that sport — the threshold before and now, by how much and in %, and every zone before and now. Power and pace are green when better; heart rate is shown without a colour.",
+         "A big change is introduced over 3 weeks: the page shows the value for each week."],
+    it: ["Pagina Zone: sotto ogni scheda, il cambiamento rispetto al test precedente dello stesso sport — la soglia prima e ora, di quanto e in %, e ogni zona prima e ora. Potenza e passo sono in verde quando migliorano; la FC è senza colore.",
+         "Un cambiamento grande viene introdotto in 3 settimane: la pagina mostra il valore di ogni settimana."] },
   { v: "1.4.0", date: "2026-10-16",
     en: ["New \"What's new\" page: Settings › Changelog shows what changed in each version, in your language.",
          "The sync button now sits in the top bar, right next to \"up to date\": tap it to sync at any time."],
